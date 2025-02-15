@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 from scripts.ambulance import Ambulance
 
-model = YOLO("models/yolo11n.pt")
+model = YOLO("models/best.pt")
 
 
 #classes
@@ -23,7 +23,7 @@ class detection():
             if not ret:
                 break
 
-            results = model(image, classes =[7]) #only detects the cars 
+            results = model(image) #only detects the cars 
             # annotated_image = image.copy()  # Create a copy of the original frame for annotation
 
             for result in results:
@@ -31,7 +31,7 @@ class detection():
                     class_id = int(box.cls)  # Get class ID
                     class_name = model.names[class_id]  # Get class name
                     confidence = box.conf.item()  # Get confidence score
-                    if class_name in ["truck"]:
+                    if class_name :
                         self.ambulance += 1
                         print(self.ambulance)
                         print(f"Detected: {class_name} (Confidence: {confidence:.2f})")
@@ -42,9 +42,9 @@ class detection():
                         # cv2.putText(annotated_image, f'{class_name} {confidence:.2f}', (c1[0], c1[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
 
                 cv2.imshow("Image", annotated_image)
-            if self.ambulance > 25:
-                Ambulance()
-                break
+            # if self.ambulance > 25:
+            #     Ambulance()
+            #     break
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
