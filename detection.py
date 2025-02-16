@@ -5,7 +5,7 @@ import queue
 from ultralytics import YOLO
 from scripts.ambulance import Ambulance
 
-model = YOLO("models/best.pt")
+model = YOLO("models/emergency.pt")
 
 FRAME_SKIP = 1  
 frame_queue = queue.Queue(maxsize=10)
