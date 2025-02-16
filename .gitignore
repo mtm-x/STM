@@ -1,3 +1,4 @@
 scripts/__pycache__/
 security.py 
 testing.py
+detections/
