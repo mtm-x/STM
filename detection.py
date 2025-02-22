@@ -1,34 +1,37 @@
 import cv2
 import threading
 import time
-import queue
+import queue    
 from ultralytics import YOLO
 from scripts.ambulance import Ambulance
 
 model = YOLO("models/emergency.pt")
-
-FRAME_SKIP = 1  
+ 
 frame_queue = queue.Queue(maxsize=10)
 display_frame_queue = queue.Queue(maxsize=10)
 TARGET_WIDTH = 640
 TARGET_HEIGHT = 480
-stop_event = threading.Event()
 
-class detection():
+
+class Detection():
     def __init__(self):
+        
         # self.video = cv2.VideoCapture("http://192.168.165.141:4747/video")
-        self.video = cv2.VideoCapture("test_videos/ambulance.mp4")
+        self.video = cv2.VideoCapture("test_videos/firetruck.mp4")
+
         if not self.video.isOpened():
             print("Error: Could not open video stream. Please check your camera URL.")
             return
+
+        self.stop_event = False
         self.video.set(cv2.CAP_PROP_FRAME_WIDTH, TARGET_WIDTH)
         self.video.set(cv2.CAP_PROP_FRAME_HEIGHT, TARGET_HEIGHT)
         self.video.set(cv2.CAP_PROP_FPS, 30)
-        print(model.names)
         self.ambulance = 0
 
     def capture_frames(self, video):
-        while not stop_event.is_set():
+
+        while not self.stop_event:
             ret, frame = video.read()
             if not ret:
                 print("Failed to capture frame from video stream.")
@@ -40,6 +43,7 @@ class detection():
             time.sleep(1 / 30)  # Sleep to maintain 30 FPS
 
     def detect_ambulance(self, frame):
+
         results = model(frame, conf=0.70)
         annotated_image = frame.copy()  # Create a copy of the original frame for annotation
 
@@ -63,11 +67,13 @@ class detection():
             self.ambulance = 0
             
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            stop_event.set()
+            self.stop_event = True
+            print("Stopping...")
         return annotated_image
 
     def process_frames(self):
-        while not stop_event.is_set():
+
+        while not self.stop_event:
             if not frame_queue.empty():
                 frame = frame_queue.get()
                 processed_frame = self.detect_ambulance(frame)
@@ -77,6 +83,7 @@ class detection():
                 print("Processed frame")
 
     def main(self):
+
         # Start threads
         threads = [
             threading.Thread(target=self.capture_frames, args=(self.video,)),
@@ -87,19 +94,19 @@ class detection():
             t.start()
 
         try:
-            while not stop_event.is_set():
+            while not self.stop_event:
                 time.sleep(0.1)
 
         except KeyboardInterrupt:
             print("Stopping...")
             
         finally:
-            stop_event.set()
+            self.stop_event = True
             for t in threads:
                 t.join()
             self.video.release()
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    detector = detection()
+    detector = Detection()
     detector.main()
